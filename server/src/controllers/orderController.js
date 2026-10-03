@@ -5,6 +5,10 @@ import asyncHandler from '../utils/asyncHandler.js';
 // POST /api/orders
 export const createOrder = asyncHandler(async (req, res) => {
   const { items, shippingAddress, paymentMethod } = req.body;
+  if (!/^[1-9]\d{5}$/.test(String(shippingAddress?.pincode || ''))) {
+  res.status(400);
+  throw new Error('Pincode must be exactly 6 digits and cannot start with 0');
+}
 
   if (!items || items.length === 0) {
     res.status(400);
