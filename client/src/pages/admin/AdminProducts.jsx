@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { getErrorMessage } from '../../api/client.js';
@@ -40,8 +41,15 @@ export default function AdminProducts() {
     setForm({ ...empty, ...p, price: String(p.price), stock: String(p.stock) });
   };
 
-  // TODO: add a confirmation dialog before deleting.
-  const remove = async (id) => {
+  const remove = async (id, name) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     await api.delete(`/products/${id}`);
     load();
   };
@@ -92,7 +100,7 @@ export default function AdminProducts() {
               <td>{p.stock}</td>
               <td className="row">
                 <button className="btn btn-ghost" onClick={() => edit(p)}>Edit</button>
-                <button className="btn btn-danger" onClick={() => remove(p._id)}>Delete</button>
+                <button className="btn btn-danger" onClick={() => remove(p._id, p.name)}>Delete</button>
               </td>
             </tr>
           ))}
@@ -101,3 +109,4 @@ export default function AdminProducts() {
     </section>
   );
 }
+
