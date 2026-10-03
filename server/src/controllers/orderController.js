@@ -3,12 +3,14 @@ import Product from '../models/Product.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 // POST /api/orders
+// export const createOrder = asyncHandler(async (req, res) => {
+//   const { items, shippingAddress, paymentMethod } = req.body;
+//   if (!/^[1-9]\d{5}$/.test(String(shippingAddress?.pincode || ''))) {
+//   res.status(400);
+//   throw new Error('Pincode must be exactly 6 digits and cannot start with 0');
+// }
 export const createOrder = asyncHandler(async (req, res) => {
   const { items, shippingAddress, paymentMethod } = req.body;
-  if (!/^[1-9]\d{5}$/.test(String(shippingAddress?.pincode || ''))) {
-  res.status(400);
-  throw new Error('Pincode must be exactly 6 digits and cannot start with 0');
-}
 
   if (!items || items.length === 0) {
     res.status(400);
@@ -16,17 +18,42 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   // Check that every product exists and has enough stock
-  for (const item of items) {
+  // for (const item of items) {
+  //   const product = await Product.findById(item.product);
+  //   if (!product) {
+  //     res.status(404);
+  //     throw new Error(`Product not found: ${item.product}`);
+  //   }
+  //   if (product.stock < item.quantity) {
+  //     res.status(400);
+  //     throw new Error(`Not enough stock for ${product.name}`);
+  //   }
+  // }
+
+  // Atomically check and reduce stock for every product
+for (const item of items) {
+  const result = await Product.updateOne(
+    {
+      _id: item.product,
+      stock: { $gte: item.quantity }
+    },
+    {
+      $inc: { stock: -item.quantity }
+    }
+  );
+
+  if (result.matchedCount === 0) {
     const product = await Product.findById(item.product);
+
     if (!product) {
       res.status(404);
       throw new Error(`Product not found: ${item.product}`);
     }
-    if (product.stock < item.quantity) {
-      res.status(400);
-      throw new Error(`Not enough stock for ${product.name}`);
-    }
+
+    res.status(400);
+    throw new Error(`Not enough stock for ${product.name}`);
   }
+}
 
   // TODO: total is currently calculated from prices sent by the client.
   // This should use prices from the database instead (see issue tracker).
