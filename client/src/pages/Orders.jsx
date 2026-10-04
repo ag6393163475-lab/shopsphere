@@ -39,7 +39,21 @@ export default function Orders() {
             <span className="muted">{new Date(o.createdAt).toLocaleDateString('en-IN')}</span>
             <strong>{formatINR(o.totalAmount)}</strong>
           </div>
-          {/* TODO: allow customer to cancel a pending order */}
+          {(o.status === 'pending' || o.status === 'confirmed') && (
+          <button
+            className="btn btn-danger"
+            onClick={async () => {
+              try {
+                await api.patch(`/orders/${o._id}/cancel`);
+                load();
+              } catch (err) {
+                setError(getErrorMessage(err));
+              }
+            }}
+          >
+            Cancel order
+          </button>
+          )}
         </div>
       ))}
     </section>
