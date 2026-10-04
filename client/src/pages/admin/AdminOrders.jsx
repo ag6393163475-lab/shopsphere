@@ -7,10 +7,14 @@ const STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState(null);
 
   const load = () => api.get('/orders').then(({ data }) => setOrders(data));
+  const loadStats = () =>
+  api.get('/orders/admin/stats').then(({ data }) => setStats(data));
   useEffect(() => {
     load();
+    loadStats();
   }, []);
 
   const changeStatus = async (id, status) => {
@@ -24,7 +28,29 @@ export default function AdminOrders() {
         <h1>Admin · Orders</h1>
         <Link to="/admin/products" className="btn btn-ghost">← Products</Link>
       </div>
-      {/* TODO: dashboard cards - total revenue, orders today, low-stock products */}
+      {stats && (
+  <div className="stat-grid">
+    <div className="card stat-card">
+      <span className="muted">Total Revenue</span>
+      <h2>{formatINR(stats.totalRevenue)}</h2>
+    </div>
+
+    <div className="card stat-card">
+      <span className="muted">Orders Today</span>
+      <h2>{stats.ordersToday}</h2>
+    </div>
+
+    <div className="card stat-card">
+      <span className="muted">Pending Orders</span>
+      <h2>{stats.pendingOrders}</h2>
+    </div>
+
+    <div className="card stat-card">
+      <span className="muted">Low Stock Products</span>
+      <h2>{stats.lowStockProducts}</h2>
+    </div>
+  </div>
+)}
       <table className="table">
         <thead>
           <tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr>

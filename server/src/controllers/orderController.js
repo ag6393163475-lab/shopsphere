@@ -80,3 +80,45 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   await order.save();
   res.json(order);
 });
+// GET /api/orders/admin/stats
+export const getAdminStats = asyncHandler(async (req, res) => {
+  const revenueResult = await Order.aggregate([
+    {
+      $match: { status: 'delivered' }
+    },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$totalAmount' }
+      }
+    }
+  ]);
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const ordersToday = await Order.countDocuments({
+    createdAt: {
+      $gte: startOfDay,
+      $lte: endOfDay
+    }
+  });
+
+  const pendingOrders = await Order.countDocuments({
+    status: 'pending'
+  });
+
+  const lowStockProducts = await Product.countDocuments({
+    stock: { $lt: 5 }
+  });
+
+  res.json({
+    totalRevenue: revenueResult[0]?.totalRevenue || 0,
+    ordersToday,
+    pendingOrders,
+    lowStockProducts
+  });
+});

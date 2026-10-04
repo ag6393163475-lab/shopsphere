@@ -5,6 +5,7 @@ import {
   getOrder,
   getAllOrders,
   updateOrderStatus,
+  getAdminStats,
 } from '../controllers/orderController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -14,7 +15,9 @@ router.use(protect);
 
 router.route('/').post(createOrder).get(adminOnly, getAllOrders);
 router.get('/mine', getMyOrders);
+router.get('/admin/stats', adminOnly, getAdminStats);
 router.get('/:id', getOrder);
+
 router.patch('/:id/status', adminOnly, updateOrderStatus);
 
 export default router;
